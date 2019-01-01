@@ -9,18 +9,25 @@ Usage
 =
 Just download SimpleHTTPFileServer.py and use it.
 
+### Requirements
+
 Requires python version >= 3.6, and aiohttp library (`pip install aiohttp`)
 
-#### Command line: (share a single folder quickly and easily)
+It works with pure python environment, tested to work in [Pythonista](https://itunes.apple.com/us/app/pythonista-3/id1085978097) (an iOS App)
+
+### Command line: (share a single folder quickly and easily)
 ```
 python SimpleHTTPFileServer.py [somePath/toShare/]
 ```
 The path defaults to the current working dir. It could be set to a file
+
 `-p [PORT]` option could be used to specify a port (default 8080).
+
 `-ro` option enables read-only mode.
+
 The server will be created on `0.0.0.0:[PORT]`
 
-#### Python: (create a customized server)
+### Python: (create a customized server)
 ```
 import SimpleHTTPFileServer as sfs
 import asyncio
