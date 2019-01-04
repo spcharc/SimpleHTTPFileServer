@@ -49,7 +49,7 @@ server.add_share('shared', to_share, readonly=True)
 server.run()
 ```
 Everything is in the `Server` class:
-##### `__init__` method: constructor
+##### `Server.__init__` method: constructor
 * `loop` allows third party event loops (default `asyncio.get_event_loop()`)
 
 * `listen` takes a list or tuple of some address-port pairs, and will try to listen on all of them (default: `('0.0.0.0',8080),`)
@@ -58,17 +58,19 @@ Everything is in the `Server` class:
 
 * `logfile` can be specified to None, and no log will be written (default: writes to stdout)
 
-##### `add_share` method adds an shared folder (could also be a file)
+##### `Server.add_share` method adds an shared folder (could also be a file)
 It needs a name (displayed in the web page, and used in web path) and a file-system path for this entry(string or pathlib.Path object)
 
 * `hidden` flag: it won't be displayed in the web page if set to `True`
 
 * `readonly` flag: uploading / renaming / copying / moving is disabled if set to `True`
 
-##### `remove_share` method could be used to remove an existing shared folder. It takes only the name as argument.
+##### `Server.remove_share` method could be used to remove an existing shared folder. It takes only the name as argument.
 
-##### Finally, `run` method starts the handling work
+##### Finally, `Server.run` method starts the handling work
 It could be terminated by `Ctrl + C`, but it will wait for existing connections to finish before exiting. The maximum time could be set when creating the `Server` instance
+
+##### You may also use `async with Server([...])` to run it asynchronously
 
 About security
 =
