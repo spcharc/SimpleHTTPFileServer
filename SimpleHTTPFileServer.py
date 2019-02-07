@@ -481,7 +481,7 @@ class Server:
                                                             self._server, i, j))
                     self._log(f'Serving on {i}:{j}')
             except Exception:
-                raise ValueError(f'Port {self._port[i]} already in use.') from \
+                raise ValueError(f'Port {j} already in use.') from \
                                                                             None
             self._log('Shared Folder(s):')
             for name, path in self._fd.items():
