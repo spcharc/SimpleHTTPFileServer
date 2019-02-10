@@ -171,7 +171,7 @@ class Server:
     @staticmethod
     def _local_path_check(path, root, strict_flag):
         try:
-            if not path.exists():
+            if strict_flag and not path.exists():
                 raise FileNotFoundError
             res = path.resolve()
             assert res.relative_to(root) is not None
@@ -248,7 +248,7 @@ class Server:
             newp.mkdir()
         except Exception as exc:
             self._log('Error: create dir {0} failed {1}: {2}'
-                                .format(folder_name), type(exc).__name__, exc)
+                                .format(folder_name, type(exc).__name__, exc)
             return html.escape('Create DIR Failed: {0}'
                                             .format(folder_name.as_posix()))
         finally:
@@ -461,7 +461,7 @@ class Server:
             except web.HTTPException:  # web.HTTPError would also work
                 raise
             except Exception:
-                raise web.HTTPBadRequest
+                raise
         if path.is_dir():
             return self._get_dir(request, rname, path, ro, root, post_result)
         elif path.is_file():
