@@ -248,7 +248,7 @@ class Server:
             newp.mkdir()
         except Exception as exc:
             self._log('Error: create dir {0} failed {1}: {2}'
-                                .format(folder_name, type(exc).__name__, exc)
+                                .format(folder_name, type(exc).__name__, exc))
             return html.escape('Create DIR Failed: {0}'
                                             .format(folder_name.as_posix()))
         finally:
