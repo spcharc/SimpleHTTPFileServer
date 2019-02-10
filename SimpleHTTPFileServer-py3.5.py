@@ -146,7 +146,10 @@ class Server:
         assert isinstance(name, str) and isinstance(path, pathlib.Path) and \
             isinstance(hidden, bool) and isinstance(readonly, bool) and \
             len(n.parts) == 1 and n.name != '..' and not n.anchor
-        path = path.resolve(strict=True)
+
+        if not path.exists():
+            raise FileNotFoundError
+        path = path.resolve()
         self._fd[name] = path
         if hidden:
             self._hd.add(name)
@@ -168,7 +171,9 @@ class Server:
     @staticmethod
     def _local_path_check(path, root, strict_flag):
         try:
-            res = path.resolve(strict=strict_flag)
+            if not path.exists():
+                raise FileNotFoundError
+            res = path.resolve()
             assert res.relative_to(root) is not None
         except FileNotFoundError:
             raise web.HTTPNotFound
