@@ -461,7 +461,7 @@ class Server:
             except web.HTTPException:  # web.HTTPError would also work
                 raise
             except Exception:
-                raise
+                raise web.HTTPBadRequest
         if path.is_dir():
             return self._get_dir(request, rname, path, ro, root, post_result)
         elif path.is_file():
