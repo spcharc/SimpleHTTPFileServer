@@ -33,7 +33,7 @@ import SimpleHTTPFileServer as sfs
 import asyncio
 
 eventloop = asyncio.get_event_loop()
-bind = ('::1', 7000), ('127.0.0.1', 8000), ('192.168.1.2', 9000)
+bind = ('::1', 7000, None), ('127.0.0.1', 8000, None), ('192.168.1.2', 9000, None)
 
 server = sfs.Server(loop=eventloop,
                     listen=bind,
@@ -52,7 +52,11 @@ Everything is in the `Server` class:
 ##### `Server.__init__` method: constructor
 * `loop` allows third party event loops (default `asyncio.get_event_loop()`)
 
-* `listen` takes a list or tuple of some address-port pairs, and will try to listen on all of them (default: `('0.0.0.0',8080),`)
+* `listen` takes a list (or tuple) of list (or tuple), inner list should have a length of 3. Its format is address, port and ssl context. It will listen on all of them (default: `('0.0.0.0',8080, None),`) ssl context could be created as:
+```
+ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+ssl_context.load_cert_chain('chain.pem', 'privkey.pem')
+```
 
 * `wait` specifies how many seconds the server waits when terminating, before a forced shutdown (default: 30)
 
