@@ -18,7 +18,7 @@ __version__ = '1.7.0'
 __author__ = 'spcharc'
 
 _change_log = '''Change Log:
-v1.7 - Add HTTPS support
+v1.7 - HTTPS support
 v1.6 - Multiple bindings.
 v1.5 - Copy / move files.
 v1.4 - Rename items.
@@ -91,7 +91,7 @@ class Server:
         '''Args:
 
         :listen:  list or tuple. IP addresses, ports to listen on, ssl contexts
-                  (ssl context could be None)
+                  (ssl context must be provided, could be None)
         :loop:    None for the current loop asyncio.get_event_loop(), or an
                   asyncio.AbstractEventLoop object
         :logfile: None to disable logging. or a file-like object that supports
