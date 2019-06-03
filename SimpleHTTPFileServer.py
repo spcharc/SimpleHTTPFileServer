@@ -14,10 +14,11 @@ from aiohttp import web
 # Uncomment the following line if os.sendfile is buggy or doesn't work
 # web.FileResponse._sendfile = web.FileResponse._sendfile_fallback
 
-__version__ = '1.6.0'
+__version__ = '1.7.0'
 __author__ = 'spcharc'
 
 _change_log = '''Change Log:
+v1.7 - Add HTTPS support
 v1.6 - Multiple bindings.
 v1.5 - Copy / move files.
 v1.4 - Rename items.
@@ -85,11 +86,12 @@ class Server:
     _html8 = '<p>{0}</p>\n'
     _re_pattern = re.compile('/{2,}')
 
-    def __init__(self, *, listen=(('0.0.0.0', 8080),), loop=None,
+    def __init__(self, *, listen=(('0.0.0.0', 8080, None),), loop=None,
                  logfile=Ellipsis, timef='%b/%d %H:%M:%S', wait=30):
         '''Args:
 
-        :listen:  list or tuple. IP addresses and ports to listen on
+        :listen:  list or tuple. IP addresses, ports to listen on, ssl contexts
+                  (ssl context could be None)
         :loop:    None for the current loop asyncio.get_event_loop(), or an
                   asyncio.AbstractEventLoop object
         :logfile: None to disable logging. or a file-like object that supports
@@ -106,7 +108,7 @@ class Server:
             logfile = sys.stdout
         try:
             assert isinstance(listen, (list, tuple))
-            for _b, _p in listen:
+            for _b, _p, _s in listen:
                 assert 0 < _p < 65536
             assert isinstance(loop, asyncio.AbstractEventLoop)
             assert (hasattr(logfile, 'write') or logfile is None)
@@ -123,7 +125,6 @@ class Server:
         self._logfile = logfile
         self._timef = timef
         self._wait = wait
-        self._server = web.Server(self._request_handler, loop=self._loop)
         self._lpsvr = []  # Will be filled when starts listening
 
     def add_share(self, name, path, *, hidden=False, readonly=False):
@@ -168,9 +169,9 @@ class Server:
             res = path.resolve(strict=strict_flag)
             assert res.relative_to(root) is not None
         except FileNotFoundError:
-            raise web.HTTPNotFound
+            raise web.HTTPNotFound(path)
         except Exception:
-            raise web.HTTPForbidden
+            raise web.HTTPForbidden(path)
         return res
 
     def _web_path(self, pathstr, method=None):
@@ -192,14 +193,14 @@ class Server:
                 raise web.HTTPMethodNotAllowed(method, ['GET', 'POST'])
         rest = pathlib.Path(rest)
         if rest.anchor:
-            raise web.HTTPForbidden
+            raise web.HTTPForbidden("Path not allowed: " + rest)
         return share_name, root, readonly, rest
 
     @staticmethod
     def _windows_check(pathstr):
         if platform.system() == 'Windows':
             if '\\' in pathstr:
-                raise web.HTTPNotFound
+                raise web.HTTPNotFound("Windows: \\ not allowed")
 
     async def _post_upload(self, reader, field, path, root):
         r = ['Upload Result:']
@@ -345,7 +346,7 @@ class Server:
             elif path.is_file():
                 suff = ''
             else:
-                raise web.HTTPInternalServerError
+                pass # ignore ... (raise web.HTTPInternalServerError ?)
             resp.append(self._html7.format(parse.quote(name + suff),
                                            html.escape(name + suff)))
         return web.Response(text=self._html6.format('List of Shared Folders',
@@ -378,7 +379,7 @@ class Server:
                 elif item.is_file():
                     body[2][item.name] = item.stat().st_size
                 else:
-                    raise web.HTTPInternalServerError
+                    pass  # just ignore (raise web.HTTPInternalServerError ?)
         except PermissionError:
             raise web.HTTPForbidden
         resp.extend(self._html2.format(
@@ -465,8 +466,8 @@ class Server:
                 time.strftime(self._timef), " ".join(map(str, content))))
 
     def run(self):
-        self._loop.run_until_complete(self.__aenter__())
         try:
+            self._loop.run_until_complete(self.__aenter__())
             self._loop.run_forever()
         except KeyboardInterrupt:
             print()
@@ -474,15 +475,19 @@ class Server:
             self._loop.run_until_complete(self.__aexit__())
 
     async def __aenter__(self):
+        runner = web.ServerRunner(web.Server(
+                                    self._request_handler, loop=self._loop))
+        await runner.setup()
         if len(self._lpsvr) == 0: # if it is already running, skip
             try:
-                for i, j in (self._listen):
-                    self._lpsvr.append(await self._loop.create_server(
-                                                            self._server, i, j))
+                for i, j, k in self._listen:
+                    svr = web.TCPSite(runner, i, j, ssl_context=k,
+                                      shutdown_timeout=self._wait)
+                    await svr.start()
+                    self._lpsvr.append(svr)
                     self._log(f'Serving on {i}:{j}')
             except Exception:
-                raise ValueError(f'Port {j} already in use.') from \
-                                                                            None
+                raise ValueError(f'Port {j} already in use.')
             self._log('Shared Folder(s):')
             for name, path in self._fd.items():
                 self._log(f'{name}: {path}' +
@@ -515,10 +520,9 @@ class Server:
     async def __aexit__(self, exc_type=None, exc_val=None, exc_traceback=None):
         if len(self._lpsvr) > 0: # if no port / no addr to listen on, skip
             self._log(f'Exit in {self._wait} sec(s).')
-            await self._server.shutdown(self._wait)
-            while self._lpsvr:
-                i = self._lpsvr.pop()
-                i.close()
+            svrs = [i.stop() for i in self._lpsvr]
+            await asyncio.gather(*svrs, loop=self._loop)
+            self._lpsvr.clear()
             self._log('Exiting.')
 
 
@@ -539,6 +543,6 @@ if __name__ == '__main__':
         '-ro', '--readonly', action='store_true', help='Start server under rea'
         'd-only mode. If a file is being shared, this option does nothing.')
     args = parser.parse_args()
-    server = Server(listen=(('0.0.0.0', args.port), ))
+    server = Server(listen=(('0.0.0.0', args.port, None), ))
     server.add_share('Shared_Folder', args.rootdir, readonly=args.readonly)
     server.run()
