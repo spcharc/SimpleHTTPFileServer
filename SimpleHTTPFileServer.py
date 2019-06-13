@@ -90,8 +90,8 @@ class Server:
                  logfile=Ellipsis, timef='%b/%d %H:%M:%S', wait=30):
         '''Args:
 
-        :listen:  list or tuple. IP addresses, ports to listen on, ssl contexts
-                  (ssl context must be provided, could be None)
+        :listen:  list or tuple. [IP address, port to listen on, ssl context]
+                  (ssl context could be None)
         :loop:    None for the current loop asyncio.get_event_loop(), or an
                   asyncio.AbstractEventLoop object
         :logfile: None to disable logging. or a file-like object that supports
