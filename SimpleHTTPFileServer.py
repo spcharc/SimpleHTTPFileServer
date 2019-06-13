@@ -109,7 +109,7 @@ class Server:
         try:
             assert isinstance(listen, (list, tuple))
             for _b, _p, _s in listen:
-                assert 0 < _p < 65536
+                assert 0 < _p < 65536, 'Port out of range'
             assert isinstance(loop, asyncio.AbstractEventLoop)
             assert (hasattr(logfile, 'write') or logfile is None)
             assert isinstance(timef, str)
