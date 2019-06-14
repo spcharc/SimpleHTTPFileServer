@@ -169,9 +169,9 @@ class Server:
             res = path.resolve(strict=strict_flag)
             assert res.relative_to(root) is not None
         except FileNotFoundError:
-            raise web.HTTPNotFound(path)
+            raise web.HTTPNotFound
         except Exception:
-            raise web.HTTPForbidden(path)
+            raise web.HTTPForbidden
         return res
 
     def _web_path(self, pathstr, method=None):
@@ -193,14 +193,14 @@ class Server:
                 raise web.HTTPMethodNotAllowed(method, ['GET', 'POST'])
         rest = pathlib.Path(rest)
         if rest.anchor:
-            raise web.HTTPForbidden("Path not allowed: " + rest)
+            raise web.HTTPForbidden
         return share_name, root, readonly, rest
 
     @staticmethod
     def _windows_check(pathstr):
         if platform.system() == 'Windows':
             if '\\' in pathstr:
-                raise web.HTTPNotFound("Windows: \\ not allowed")
+                raise web.HTTPNotFound
 
     async def _post_upload(self, reader, field, path, root):
         r = ['Upload Result:']
