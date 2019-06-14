@@ -463,7 +463,7 @@ class Server:
     def _log(self, *content):
         if self._logfile is not None:
             self._logfile.write('{0} - {1}\n'.format(
-                time.strftime(self._timef), " ".join(map(str, content))))
+                time.strftime(self._timef), ' '.join(map(str, content))))
 
     def run(self):
         try:
