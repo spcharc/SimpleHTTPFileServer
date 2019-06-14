@@ -57,7 +57,7 @@ class Server:
     _html0 = ('<!DOCTYPE html>\n<html>\n<head>\n<title>Simple HTTP File Server'
               f'</title>\n<meta name="author" content="{__author__}">\n<meta n'
               f'ame="generator" content="{platform.python_implementation()}-Ve'
-              f'r{platform.python_version()}">\n</head>')
+              f'r{platform.python_version()}">\n<meta charset="UTF-8"></head>')
     _html1 = '<body>\n<h2>Index of {0}</h2>\n{1}<hr>\n<table>'
     _html2 = '<tr>\n<td width="80%">{0}</td>\n<td width="20%">{1}</td>\n</tr>'
     _html3 = '</table>\n<hr>'
