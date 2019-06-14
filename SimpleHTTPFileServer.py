@@ -61,23 +61,25 @@ class Server:
     _html1 = '<body>\n<h2>Index of {0}</h2>\n{1}<hr>\n<table>'
     _html2 = '<tr>\n<td width="80%">{0}</td>\n<td width="20%">{1}</td>\n</tr>'
     _html3 = '</table>\n<hr>'
-    _html4 = ('<form enctype="multipart/form-data" method="post">Upload:\n<inp'
-              'ut type="file" name="0" multiple="multiple" required="required"'
-              '>\n<input type="submit" value="Upload file(s)">\n</form><br>\n<'
-              'form enctype="multipart/form-data" method="post">New DIR:\n<inp'
-              'ut type="text" name="1" required="required">\n<input type="subm'
-              'it" value="Create DIR">\n</form><br>\n<form enctype="multipart/'
-              'form-data" method="post">Delete:\n<input type="text" name="2" r'
-              'equired="required">\n<input type="submit" value="Confirm Deleti'
-              'on">\n</form><br>\n<form enctype="multipart/form-data" method="'
-              'post">Rename:\n<input type="text" name="3" required="required">'
-              '->\n<input type="text" name="4" required="required">\n<input ty'
-              'pe="submit" value="Rename">\n</form><br>\n<form enctype="multip'
-              'art/form-data" method="post">\n<input type="radio" name="5" val'
-              'ue="cp" required="required">Copy\n<input type="radio" name="5" '
-              'value="mv" required="required">Move\n<input type="text" name="6'
-              '" required="required">to this folder\n<input type="submit" valu'
-              'e="Paste">\n</form>\n<hr>')
+    _html4 = ('<form enctype="multipart/form-data" method="post" accept-charse'
+              't="UTF-8">Upload:\n<input type="file" name="0" multiple="multip'
+              'le" required="required">\n<input type="submit" value="Upload fi'
+              'le(s)">\n</form><br>\n<form enctype="multipart/form-data" metho'
+              'd="post" accept-charset="UTF-8">New DIR:\n<input type="text" na'
+              'me="1" required="required">\n<input type="submit" value="Create'
+              ' DIR">\n</form><br>\n<form enctype="multipart/form-data" method'
+              '="post" accept-charset="UTF-8">Delete:\n<input type="text" name'
+              '="2" required="required">\n<input type="submit" value="Confirm '
+              'Deletion">\n</form><br>\n<form enctype="multipart/form-data" me'
+              'thod="post" accept-charset="UTF-8">Rename:\n<input type="text" '
+              'name="3" required="required">->\n<input type="text" name="4" re'
+              'quired="required">\n<input type="submit" value="Rename">\n</for'
+              'm><br>\n<form enctype="multipart/form-data" method="post" accep'
+              't-charset="UTF-8">\n<input type="radio" name="5" value="cp" req'
+              'uired="required">Copy\n<input type="radio" name="5" value="mv" '
+              'required="required">Move\n<input type="text" name="6" required='
+              '"required">to this folder\n<input type="submit" value="Paste">'
+              '\n</form>\n<hr>')
     _html5 = (f'<p title="{_change_log}"><i><small>Simple HTTP File Server ver'
               f'sion {__version__}</small></i></p>\n</body>\n</html>')
     _html6 = (_html0 + '\n<body>\n<h2>Home Page</h2>\n<p>{0}</p>\n<hr>\n{1}\n<'
@@ -349,7 +351,7 @@ class Server:
                 pass # ignore ... (raise web.HTTPInternalServerError ?)
             resp.append(self._html7.format(parse.quote(name + suff),
                                            html.escape(name + suff)))
-        return web.Response(text=self._html6.format('List of Shared Folders',
+        return web.Response(text=self._html6.format('List of entries',
                                                     '<br>\n'.join(resp)),
                             content_type='text/html')
 
