@@ -14,10 +14,12 @@ from aiohttp import web
 # Uncomment the following line if os.sendfile is buggy or doesn't work
 # web.FileResponse._sendfile = web.FileResponse._sendfile_fallback
 
-__version__ = '1.7.0'
+__version__ = '1.9.0'
 __author__ = 'spcharc'
 
 _change_log = '''Change Log:
+v1.9 - Sub-app
+v1.8 - Prefix
 v1.7 - HTTPS support
 v1.6 - Multiple bindings.
 v1.5 - Copy / move files.
@@ -89,7 +91,8 @@ class Server:
     _re_pattern = re.compile('/{2,}')
 
     def __init__(self, *, listen=(('0.0.0.0', 8080, None),), loop=None,
-                 logfile=Ellipsis, timef='%b/%d %H:%M:%S', wait=30):
+                 logfile=Ellipsis, timef='%b/%d %H:%M:%S', wait=30,
+                 prefix='/'):
         '''Args:
 
         :listen:  list or tuple. [IP address, port to listen on, ssl context]
@@ -116,6 +119,7 @@ class Server:
             assert (hasattr(logfile, 'write') or logfile is None)
             assert isinstance(timef, str)
             assert isinstance(wait, int) and wait >= 0
+            assert isinstance(prefix, str) and prefix[0] == prefix[-1] == '/'
         except AssertionError as exc:
             raise ValueError('Arguments error. Please see docstring.') from exc
 
@@ -127,6 +131,7 @@ class Server:
         self._logfile = logfile
         self._timef = timef
         self._wait = wait
+        self._prefix = prefix
         self._lpsvr = []  # Will be filled when starts listening
 
     def add_share(self, name, path, *, hidden=False, readonly=False):
@@ -157,7 +162,15 @@ class Server:
         else:
             self._ro.discard(name)
 
-    def remove_share(self, name):
+    def add_subapp(self, name, func, *, hidden=False):
+        assert callable(func)
+        self._fd[name] = func
+        if hidden:
+            self._hd.add(name)
+        else:
+            self._hd.discard(name)
+
+    def remove(self, name):
         if name in self._fd:
             del self._fd[name]
             self._hd.discard(name)
@@ -177,8 +190,9 @@ class Server:
         return res
 
     def _web_path(self, pathstr, method=None):
-        assert pathstr[0] == '/'
-        pathstr = pathstr[1:]
+        if not pathstr.startswith(self._prefix):
+            raise web.HTTPMovedPermanently(self._prefix)
+        pathstr = pathstr[len(self._prefix):]
         share_name, sep, rest = pathstr.partition('/')
         if len(share_name) == 0:
             assert len(sep) == 0 and len(rest) == 0
@@ -187,7 +201,9 @@ class Server:
             root = self._fd[share_name]
         else:
             raise web.HTTPNotFound
-        readonly = True if root is None else share_name in self._ro
+        if callable(root):
+            return root
+        readonly = root is None or share_name in self._ro
         if method is not None:
             if readonly and method != 'GET':
                 raise web.HTTPMethodNotAllowed(method, ['GET'])
@@ -302,12 +318,15 @@ class Server:
             self._windows_check(src)
             webpath = self._re_pattern.sub('/',
                                            parse.urljoin(request.path, src))
-            rname, root2, ro, rest = self._web_path(webpath)
+            wpres = self._web_path(webpath)
+            if callable(wpres):
+                return 'Invalid source'
+            rname, root2, ro, rest = res
             if ro and method == 'mv':
                 return 'Target read-only. Move not allowed.'
             if len(rest.parts) == 0:
                 if root2.is_dir():
-                    return 'Not Implemented.'
+                    return 'Move DIR: Not Implemented.'
                 elif root2.is_file():
                     if method == 'mv':
                         return 'Cannot move shared file.'
@@ -343,7 +362,9 @@ class Server:
         for name, path in self._fd.items():
             if name in self._hd:
                 continue
-            if path.is_dir():
+            if callable(path):
+                suff = ''
+            elif path.is_dir():
                 suff = '/'
             elif path.is_file():
                 suff = ''
@@ -443,7 +464,10 @@ class Server:
             raise web.HTTPMovedPermanently(path)
         self._log(request.remote, '->', request.host, request.method,
                   request.path, request.headers.get('Range', ''))
-        rname, root, ro, to_handle = self._web_path(path, request.method)
+        wpres = self._web_path(path, request.method)
+        if callable(wpres):
+            return await wpres(request)
+        rname, root, ro, to_handle = wpres
         if root is None:
             return self._get_mainpage()
         path = self._local_path_check(root / to_handle, root, True)
@@ -476,18 +500,33 @@ class Server:
         finally:
             self._loop.run_until_complete(self.__aexit__())
 
+    def show_ip(self, addr, port, is_ipv6):
+        s = None
+        dest = addr, port
+        try:
+            s = socket.socket(socket.AF_INET6 if is_ipv6 else socket.AF_INET,
+                              socket.SOCK_DGRAM)
+            s.connect(dest)
+            ip = s.getsockname()[0]
+            self._log('Host IPv6:' if is_ipv6 else 'Host IPv4', ip)
+        except Exception:
+            pass
+        finally:
+            if s is not None:
+                s.close()
+
     async def __aenter__(self):
-        runner = web.ServerRunner(web.Server(
-                                    self._request_handler, loop=self._loop))
-        await runner.setup()
         if len(self._lpsvr) == 0: # if it is already running, skip
             try:
                 for i, j, k in self._listen:
+                    runner = web.ServerRunner(web.Server(
+                                    self._request_handler, loop=self._loop))
+                    await runner.setup()
                     svr = web.TCPSite(runner, i, j, ssl_context=k,
                                       shutdown_timeout=self._wait)
                     await svr.start()
                     self._lpsvr.append(svr)
-                    self._log(f'Serving on {i}:{j}')
+                    self._log(f'Serving on {i}:{j}' + (' [SSL]' if k else ''))
             except Exception:
                 raise ValueError(f'Port {j} already in use.')
             self._log('Shared Folder(s):')
@@ -495,29 +534,8 @@ class Server:
                 self._log(f'{name}: {path}' +
                           ('[hidden]' if name in self._hd else '') +
                           ('[readonly]' if name in self._ro else ''))
-            s = None
-            try:
-                s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                s.connect(('8.8.8.8', 53))
-                ip = s.getsockname()[0]
-                self._log('Host IPv4:', ip)
-            except Exception:
-                pass
-            finally:
-                if s is not None:
-                    s.close()
-                    s = None
-            try:
-                s = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
-                s.connect(('2001:4860:4860::8888', 53))
-                ip = s.getsockname()[0]
-                self._log('Host IPv6:', ip)
-            except Exception:
-                pass
-            finally:
-                if s is not None:
-                    s.close()
-                    s = None
+            self.show_ip('8.8.8.8', 53, False)
+            self.show_ip('2001:4860:4860::8888', 53, True)
 
     async def __aexit__(self, exc_type=None, exc_val=None, exc_traceback=None):
         if len(self._lpsvr) > 0: # if no port / no addr to listen on, skip
