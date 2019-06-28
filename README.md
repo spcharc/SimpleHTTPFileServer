@@ -69,7 +69,9 @@ It needs a name (displayed in the web page, and used in web path) and a file-sys
 
 * `readonly` flag: uploading / renaming / copying / moving is disabled if set to `True`
 
-##### `Server.remove_share` method could be used to remove an existing shared folder. It takes only the name as argument.
+##### `Server.add_subapp` method adds a async function handler as an entry. The function should have a signature of `async def func(request)`. All requests under this path will be passed to this function.
+
+##### `Server.remove` method could be used to remove an existing shared item. It takes only the name as argument.
 
 ##### Finally, `Server.run` method starts the handling work
 It could be terminated by `Ctrl + C`, but it will wait for existing connections to finish before exiting. The maximum time could be set when creating the `Server` instance
