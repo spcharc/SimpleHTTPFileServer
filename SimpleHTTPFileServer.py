@@ -14,13 +14,13 @@ from aiohttp import web
 # Uncomment the following line if os.sendfile is buggy or doesn't work
 # web.FileResponse._sendfile = web.FileResponse._sendfile_fallback
 
-__version__ = '1.9.0'
+__version__ = '1.9.2'
 __author__ = 'spcharc'
 
 _change_log = '''Change Log:
-v1.9 - Sub-app
-v1.8 - Prefix
-v1.7 - HTTPS support
+v1.9 - Sub-app.
+v1.8 - Prefix.
+v1.7 - HTTPS support.
 v1.6 - Multiple bindings.
 v1.5 - Copy / move files.
 v1.4 - Rename items.
@@ -59,7 +59,8 @@ class Server:
     _html0 = ('<!DOCTYPE html>\n<html>\n<head>\n<title>Simple HTTP File Server'
               f'</title>\n<meta name="author" content="{__author__}">\n<meta n'
               f'ame="generator" content="{platform.python_implementation()}-Ve'
-              f'r{platform.python_version()}">\n<meta charset="UTF-8"></head>')
+              f'r{platform.python_version()}">\n<meta charset="UTF-8">\n</head'
+              '>')
     _html1 = '<body>\n<h2>Index of {0}</h2>\n{1}<hr>\n<table>'
     _html2 = '<tr>\n<td width="80%">{0}</td>\n<td width="20%">{1}</td>\n</tr>'
     _html3 = '</table>\n<hr>'
@@ -92,20 +93,24 @@ class Server:
 
     def __init__(self, *, listen=(('0.0.0.0', 8080, None),), loop=None,
                  logfile=Ellipsis, timef='%b/%d %H:%M:%S', wait=30,
-                 prefix='/'):
+                 prefix='/', https_redir=()):
         '''Args:
 
-        :listen:  list or tuple. [IP address, port to listen on, ssl context]
-                  (ssl context could be None)
-        :loop:    None for the current loop asyncio.get_event_loop(), or an
-                  asyncio.AbstractEventLoop object
-        :logfile: None to disable logging. or a file-like object that supports
-                  object.write(str). Please be aware that not all information
-                  is written into logfile. Such as traceback of exceptions
-                  produced by aiohttp module
-        :timef:   str. Time format in log. Used in time.strftime()
-        :wait:    int. Wait a maximum number of sec(s) for connections to close
-                  when __aexit__ is awaited
+        :listen:      list or tuple. [IP address, port to listen on, ssl
+                      context] (ssl context could be None to use plain http)
+        :loop:        None for the current loop asyncio.get_event_loop(), or an
+                      asyncio.AbstractEventLoop object
+        :logfile:     None to disable logging. or a file-like object that
+                      supports object.write(str). Please be aware that not all
+                      information is written into logfile. Such as traceback of
+                      exceptions produced by aiohttp module
+        :timef:       str. Time format in log. Used in time.strftime()
+        :wait:        int. Wait a maximum number of sec(s) for connections to
+                      close when __aexit__ is awaited
+        :prefix:      str. The main page could be deployed under a directory
+        :https_redir: (str, int) list or tuple. 1st one is domain name, 2nd one
+                      is port number. If it's empty, then it doesn't redirect
+                      user
         '''
         if loop is None:
             loop = asyncio.get_event_loop()
@@ -120,6 +125,8 @@ class Server:
             assert isinstance(timef, str)
             assert isinstance(wait, int) and wait >= 0
             assert isinstance(prefix, str) and prefix[0] == prefix[-1] == '/'
+            assert isinstance(https_redir, (list, tuple))
+            assert len(https_redir) == 0 or len(https_redir) == 2
         except AssertionError as exc:
             raise ValueError('Arguments error. Please see docstring.') from exc
 
@@ -132,6 +139,7 @@ class Server:
         self._timef = timef
         self._wait = wait
         self._prefix = prefix
+        self._https = tuple(https_redir)
         self._lpsvr = []  # Will be filled when starts listening
 
     def add_share(self, name, path, *, hidden=False, readonly=False):
@@ -163,6 +171,12 @@ class Server:
             self._ro.discard(name)
 
     def add_subapp(self, name, func, *, hidden=False):
+        '''Args:
+
+        :name:   str. name of app
+        :func:   an async handler function called with func(request)
+        :hidden: bool. Hidden apps can only be accessed by typing the correct
+                 path in browser address bar'''
         assert callable(func)
         self._fd[name] = func
         if hidden:
@@ -171,6 +185,7 @@ class Server:
             self._hd.discard(name)
 
     def remove(self, name):
+        'Remove an entry by its name'
         if name in self._fd:
             del self._fd[name]
             self._hd.discard(name)
@@ -456,6 +471,7 @@ class Server:
             raise web.HTTPBadRequest
 
     async def _request_handler(self, request):
+        self._https_redirect(request)
         if request.query_string:
             raise web.HTTPBadRequest
         self._windows_check(request.path)
@@ -486,6 +502,14 @@ class Server:
         else:
             raise web.HTTPInternalServerError
 
+    def _https_redirect(self, request):
+        if self._https and not request.secure:
+            new_url = request.url.with_host(self._https[0]).with_scheme(
+                                                                    'https')
+            if new_url.port != self._https:
+                new_url = new_url.with_port(self._https[1])
+            raise web.HTTPPermanentRedirect(new_url)
+
     def _log(self, *content):
         if self._logfile is not None:
             self._logfile.write('{0} - {1}\n'.format(
@@ -508,7 +532,7 @@ class Server:
                               socket.SOCK_DGRAM)
             s.connect(dest)
             ip = s.getsockname()[0]
-            self._log('Host IPv6:' if is_ipv6 else 'Host IPv4', ip)
+            self._log('Host IPv6:' if is_ipv6 else 'Host IPv4:', ip)
         except Exception:
             pass
         finally:
@@ -529,7 +553,7 @@ class Server:
                     self._log(f'Serving on {i}:{j}' + (' [SSL]' if k else ''))
             except Exception:
                 raise ValueError(f'Port {j} already in use.')
-            self._log('Shared Folder(s):')
+            self._log('List of share(s):')
             for name, path in self._fd.items():
                 self._log(f'{name}: {path}' +
                           ('[hidden]' if name in self._hd else '') +
