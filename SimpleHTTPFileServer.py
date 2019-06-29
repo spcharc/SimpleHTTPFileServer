@@ -336,7 +336,7 @@ class Server:
             wpres = self._web_path(webpath)
             if callable(wpres):
                 return 'Invalid source'
-            rname, root2, ro, rest = res
+            rname, root2, ro, rest = wpres
             if ro and method == 'mv':
                 return 'Target read-only. Move not allowed.'
             if len(rest.parts) == 0:
@@ -590,3 +590,4 @@ if __name__ == '__main__':
     server = Server(listen=(('0.0.0.0', args.port, None), ))
     server.add_share('Shared_Folder', args.rootdir, readonly=args.readonly)
     server.run()
+    
