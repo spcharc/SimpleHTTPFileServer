@@ -506,7 +506,7 @@ class Server:
         if self._https and not request.secure:
             new_url = request.url.with_host(self._https[0]).with_scheme(
                                                                     'https')
-            if new_url.port != self._https:
+            if new_url.port != self._https[1]:
                 new_url = new_url.with_port(self._https[1])
             raise web.HTTPPermanentRedirect(new_url)
 
