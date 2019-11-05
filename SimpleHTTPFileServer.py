@@ -14,7 +14,7 @@ from aiohttp import web
 # Uncomment the following line if os.sendfile is buggy or doesn't work
 # web.FileResponse._sendfile = web.FileResponse._sendfile_fallback
 
-__version__ = '1.9.2'
+__version__ = '1.9.3'
 __author__ = 'spcharc'
 
 _change_log = '''Change Log:
@@ -592,4 +592,3 @@ if __name__ == '__main__':
     server = Server(listen=(('0.0.0.0', args.port, None), ))
     server.add_share('Shared_Folder', args.rootdir, readonly=args.readonly)
     server.run()
-    
