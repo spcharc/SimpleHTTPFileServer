@@ -404,8 +404,8 @@ class Server:
                         path.relative_to(root)
                     ).as_posix()),
                     post_result),
-                '<tr>\n<th style="width:80%">{0}</th>\n<th style="width:20%">{1}'
-                '</th>\n</tr>']
+                '<tr>\n<th style="width:80%;text-align:left;">Name</th>\n<th s'
+                'tyle="width:20%;text-align:left;">Size</th>\n</tr>']
         body = [[], [], {}]
         # python 3.6 dict: keys are kept in insertion order
         try:
