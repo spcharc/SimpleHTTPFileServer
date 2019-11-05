@@ -62,8 +62,8 @@ class Server:
               f'r{platform.python_version()}">\n<meta charset="UTF-8">\n</head'
               '>')
     _html1 = '<body>\n<h2>Index of {0}</h2>\n{1}<hr>\n<table>'
-    _html2 = ('<tr>\n<td style="width:80%">{0}</td>\n<td style="width:20%">{1}'
-              '</td>\n</tr>')
+    _html2 = ('<tr>\n<td style="width:80%;">{0}</td>\n<td style="width:20%;">{'
+              '1}</td>\n</tr>')
     _html3 = '</table>\n<hr>'
     _html4 = ('<form enctype="multipart/form-data" method="post" accept-charse'
               't="UTF-8">Upload:\n<input type="file" name="0" multiple="multip'
