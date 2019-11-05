@@ -109,9 +109,11 @@ class Server:
         :wait:        int. Wait a maximum number of sec(s) for connections to
                       close when __aexit__ is awaited
         :prefix:      str. The main page could be deployed under a directory
-        :https_redir: (str, int) list or tuple. 1st one is domain name, 2nd one
-                      is port number. If it's empty, then it doesn't redirect
-                      user
+        :https_redir: (str, int) list or tuple. Must have length 0 or 2. 1st
+                      one is domain name, 2nd one is port number. If the user
+                      doesn't use https, then return 301 Moved Permanently to
+                      specified domian name and port. If it's empty, then
+                      do not redirect user
         '''
         if loop is None:
             loop = asyncio.get_event_loop()
