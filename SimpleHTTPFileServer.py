@@ -62,7 +62,7 @@ class Server:
               f'r{platform.python_version()}">\n<meta charset="UTF-8">\n<style'
               '>\nhr{width:500px;}\nth:nth-child(1){width:20%;text-align:left;'
               '}\nth:nth-child(2){width:80%;text-align:left}\ntd:nth-child(1){'
-              'width:20%;}\ntd:nth-child(2){width:20%;}\n</head>')
+              'width:20%;}\ntd:nth-child(2){width:20%;}\n</style>\n</head>')
     _html1 = '<body>\n<h2>Index of {0}</h2>\n{1}<hr>\n<table>'
     _html2 = '<tr>\n<{0}>{1}</{0}>\n<{0}>{2}</{0}>\n</tr>'
     _html3 = '</table>\n<hr>'
