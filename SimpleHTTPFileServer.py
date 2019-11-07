@@ -87,8 +87,7 @@ class Server:
               '\n</form>\n<hr>')
     _html5 = (f'<p title="{_change_log}"><i><small>Simple HTTP File Server ver'
               f'sion {__version__}</small></i></p>\n</body>\n</html>')
-    _html6 = (_html0 + '\n<body>\n<h2>Home Page</h2>\n<p>{0}</p>\n<hr>\n{1}\n<'
-              'hr>' + _html5)
+    _html6 = '\n<body>\n<h2>Home Page</h2>\n<p>{0}</p>\n<hr>\n{1}\n<hr>'
     _html7 = '<a href="{0}">{1}</a>'
     _html8 = '<p>{0}</p>\n'
     _re_pattern = re.compile('/{2,}')
@@ -391,8 +390,11 @@ class Server:
                 pass # ignore ... (raise web.HTTPInternalServerError ?)
             resp.append(self._html7.format(parse.quote(name + suff),
                                            html.escape(name + suff)))
-        return web.Response(text=self._html6.format('List of entries',
-                                                    '<br>\n'.join(resp)),
+        return web.Response(text=''.join([self._html0,
+                                          self._html6.format(
+                                              'List of entries',
+                                              '<br>\n'.join(resp)),
+                                          self._html5]),
                             content_type='text/html')
 
     def _get_dir(self, request, rname, path, ro, root, post_result):
