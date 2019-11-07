@@ -14,7 +14,7 @@ from aiohttp import web
 # Uncomment the following line if os.sendfile is buggy or doesn't work
 # web.FileResponse._sendfile = web.FileResponse._sendfile_fallback
 
-__version__ = '1.9.3'
+__version__ = '1.9.4'
 __author__ = 'spcharc'
 
 _change_log = '''Change Log:
@@ -59,11 +59,12 @@ class Server:
     _html0 = ('<!DOCTYPE html>\n<html>\n<head>\n<title>Simple HTTP File Server'
               f'</title>\n<meta name="author" content="{__author__}">\n<meta n'
               f'ame="generator" content="{platform.python_implementation()}-Ve'
-              f'r{platform.python_version()}">\n<meta charset="UTF-8">\n</head'
-              '>')
+              f'r{platform.python_version()}">\n<meta charset="UTF-8">\n<style'
+              '>\nhr{width:500px;}\nth:nth-child(1){width:20%;text-align:left;'
+              '}\nth:nth-child(2){width:80%;text-align:left}\ntd:nth-child(1){'
+              'width:20%;}\ntd:nth-child(2){width:20%;}\n</head>')
     _html1 = '<body>\n<h2>Index of {0}</h2>\n{1}<hr>\n<table>'
-    _html2 = ('<tr>\n<td style="width:80%;">{0}</td>\n<td style="width:20%;">{'
-              '1}</td>\n</tr>')
+    _html2 = '<tr>\n<{0}>{1}</{0}>\n<{0}>{2}</{0}>\n</tr>'
     _html3 = '</table>\n<hr>'
     _html4 = ('<form enctype="multipart/form-data" method="post" accept-charse'
               't="UTF-8">Upload:\n<input type="file" name="0" multiple="multip'
@@ -406,13 +407,13 @@ class Server:
                         path.relative_to(root)
                     ).as_posix()),
                     post_result),
-                '<tr>\n<th style="width:80%;text-align:left;">Name</th>\n<th s'
-                'tyle="width:20%;text-align:left;">Size</th>\n</tr>']
+                self._html2.format('th', 'Name', 'Size')]
         body = [[], [], {}]
         # python 3.6 dict: keys are kept in insertion order
         try:
-            resp.append(self._html2.format(self._html7.format(
-                '../', '../'), 'DIR'))
+            resp.append(self._html2.format('td',
+                                           self._html7.format('../', '../'),
+                                           'DIR'))
             for item in path.iterdir():
                 if item.is_symlink():
                     body[0].append(item.name)
@@ -425,16 +426,19 @@ class Server:
         except PermissionError:
             raise web.HTTPForbidden
         resp.extend(self._html2.format(
+            'td',
             self._html7.format(parse.quote(item_name),
                                html.escape(item_name + '@')),
             'LNK')
             for item_name in sorted(body[0]))
         resp.extend(self._html2.format(
+            'td',
             self._html7.format(parse.quote(item_name + '/'),
                                html.escape(item_name + '/')),
             'DIR')
             for item_name in sorted(body[1]))
         resp.extend(self._html2.format(
+            'td',
             self._html7.format(parse.quote(item_name),
                                html.escape(item_name)),
             size)
