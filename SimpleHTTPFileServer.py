@@ -60,9 +60,10 @@ class Server:
               f'</title>\n<meta name="author" content="{__author__}">\n<meta n'
               f'ame="generator" content="{platform.python_implementation()}-Ve'
               f'r{platform.python_version()}">\n<meta charset="UTF-8">\n<style'
-              '>\nhr{width:500px;}\nth:nth-child(1){width:20%;text-align:left;'
-              '}\nth:nth-child(2){width:80%;text-align:left;}\ntd:nth-child(1)'
-              '{width:20%;}\ntd:nth-child(2){width:20%;}\n</style>\n</head>')
+              '>\nhr{max-width:100%;margin:0px;}\nth:nth-child(1){width:20%;te'
+              'xt-align:left;}\nth:nth-child(2){width:80%;text-align:left;}\nt'
+              'd:nth-child(1){width:20%;}\ntd:nth-child(2){width:20%;}\n</styl'
+              'e>\n</head>')
     _html1 = '<body>\n<h2>Index of {0}</h2>\n{1}<hr>\n<table>'
     _html2 = '<tr>\n<{0}>{1}</{0}>\n<{0}>{2}</{0}>\n</tr>'
     _html3 = '</table>\n<hr>'
