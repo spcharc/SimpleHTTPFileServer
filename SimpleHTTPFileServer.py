@@ -59,11 +59,12 @@ class Server:
     _html0 = ('<!DOCTYPE html>\n<html>\n<head>\n<title>Simple HTTP File Server'
               f'</title>\n<meta name="author" content="{__author__}">\n<meta n'
               f'ame="generator" content="{platform.python_implementation()}-Ve'
-              f'r{platform.python_version()}">\n<meta charset="UTF-8">\n<style'
-              '>\nhr{width:500px;margin-left:0px;}\nth:nth-child(1){width:20%;'
-              'text-align:left;}\nth:nth-child(2){width:80%;text-align:left;}'
-              '\ntd:nth-child(1){width:20%;}\ntd:nth-child(2){width:20%;}\n</s'
-              'tyle>\n</head>')
+              f'r{platform.python_version()}">\n<meta charset="UTF-8">\n<meta '
+              'name="viewport" content="width=device-width, initial-scale=1.0"'
+              '>\n<style>\nhr{width:500px;margin-left:0px;}\nth:nth-child(1){w'
+              'idth:20%;text-align:left;}\nth:nth-child(2){width:80%;text-alig'
+              'n:left;}\ntd:nth-child(1){width:20%;}\ntd:nth-child(2){width:20'
+              '%;}\n</style>\n</head>')
     _html1 = '<body>\n<h2>Index of {0}</h2>\n{1}<hr>\n<table>'
     _html2 = '<tr>\n<{0}>{1}</{0}>\n<{0}>{2}</{0}>\n</tr>'
     _html3 = '</table>\n<hr>'
