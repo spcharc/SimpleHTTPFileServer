@@ -14,7 +14,7 @@ from aiohttp import web
 # Uncomment the following line if os.sendfile is buggy or doesn't work
 # web.FileResponse._sendfile = web.FileResponse._sendfile_fallback
 
-__version__ = '1.9.6'
+__version__ = '1.9.7'
 __author__ = 'spcharc'
 
 _change_log = '''Change Log:
@@ -294,7 +294,7 @@ class Server:
             if newp.is_symlink() or newp.is_file():
                 newp.unlink()
             elif newp.is_dir():
-                newp.rmdir()
+                shutil.rmtree(newp)
         except Exception as exc:
             self._log(f'Error: delete {to_del} failed '
                       f'{type(exc).__name__}: {exc}')
