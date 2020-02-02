@@ -363,7 +363,7 @@ class Server:
                 return 'Target exists'
             if p.is_dir():
                 if method == 'cp':
-                    shutil.copytree(p, t, symlinks=False)
+                    shutil.copytree(p, t, symlinks=True)
                 else:
                     shutil.move(p, t)
             else:
