@@ -14,7 +14,7 @@ from aiohttp import web
 # Uncomment the following line if os.sendfile is buggy or doesn't work
 # web.FileResponse._sendfile = web.FileResponse._sendfile_fallback
 
-__version__ = '1.9.5'
+__version__ = '1.9.6'
 __author__ = 'spcharc'
 
 _change_log = '''Change Log:
@@ -339,36 +339,38 @@ class Server:
             webpath = self._re_pattern.sub('/',
                                            parse.urljoin(request.path, src))
             wpres = self._web_path(webpath)
-            if callable(wpres):
+            if callable(wpres):        # if it's an handler
                 return 'Invalid source'
             rname, root2, ro, rest = wpres
             if ro and method == 'mv':
                 return 'Target read-only. Move not allowed.'
             if len(rest.parts) == 0:
-                if root2.is_dir():
-                    return 'Move DIR: Not Implemented.'
-                elif root2.is_file():
+                if root2.is_dir() or root2.is_file():
                     if method == 'mv':
-                        return 'Cannot move shared file.'
+                        return 'Cannot move shared entry.'
                     p = root2
                     name = rname
                 else:
-                    raise ValueError('Unknown type.')
+                    raise ValueError('Error: Unknown type.')
             else:
                 p = self._local_path_check(root2 / rest, root2, True)
-                if p.is_dir():
-                    return 'Not Implemented.'
-                elif p.is_file():
+                if p.is_dir() or p.is_file():
                     name = p.name
                 else:
-                    raise ValueError('Unknown type.')
+                    raise ValueError('Error: Unknown type.')
             t = self._local_path_check(path / name, root, False)
             if t.exists():
                 return 'Target exists'
-            if method == 'cp':
-                shutil.copy(p, t, follow_symlinks=False)
+            if p.is_dir():
+                if method == 'cp':
+                    shutil.copytree(p, t, symlinks=False)
+                else:
+                    shutil.move(p, t)
             else:
-                shutil.move(p, t, copy_function=shutil.copy)
+                if method == 'mv':
+                    shutil.copy2(p, t, follow_symlinks=False)
+                else:
+                    shutil.move(p, t)
         except Exception as exc:
             self._log(f'Error: cp/mv {src} failed '
                       f'{type(exc).__name__}: {exc}')
