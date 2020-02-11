@@ -14,7 +14,7 @@ from aiohttp import web
 # Uncomment the following line if os.sendfile is buggy or doesn't work
 # web.FileResponse._sendfile = web.FileResponse._sendfile_fallback
 
-__version__ = '1.9.7'
+__version__ = '1.9.8'
 __author__ = 'spcharc'
 
 _change_log = '''Change Log:
@@ -367,7 +367,7 @@ class Server:
                 else:
                     shutil.move(p, t)
             else:
-                if method == 'mv':
+                if method == 'cp':
                     shutil.copy2(p, t, follow_symlinks=False)
                 else:
                     shutil.move(p, t)
