@@ -8,6 +8,7 @@ import shutil
 import html
 import platform
 import re
+import functools
 from urllib import parse
 from aiohttp import web
 
@@ -93,6 +94,8 @@ class Server:
     _html7 = '<a href="{0}">{1}</a>'
     _html8 = '<p>{0}</p>\n'
     _re_pattern = re.compile('/{2,}')
+    _func_cpt = functools.partial(shutil.copytree, symlinks=True)
+    _func_cp2 = functools.partial(shutil.copy2, follow_symlinks=False)
 
     def __init__(self, *, listen=(('0.0.0.0', 8080, None),), loop=None,
                  logfile=Ellipsis, timef='%b/%d %H:%M:%S', wait=30,
@@ -260,7 +263,7 @@ class Server:
                           f'{type(exc).__name__}: {exc}')
                 r.append(html.escape(f'Failed: {filename}'))
                 try:
-                    os.remove(newp)
+                    newp.unlink()  # python 3.8: unlink(missing_ok=True)
                 except Exception:
                     pass
                 break
@@ -294,7 +297,7 @@ class Server:
             if newp.is_symlink() or newp.is_file():
                 newp.unlink()
             elif newp.is_dir():
-                shutil.rmtree(newp)
+                self._loop.run_in_executor(None, shutil.rmtree, newp)
         except Exception as exc:
             self._log(f'Error: delete {to_del} failed '
                       f'{type(exc).__name__}: {exc}')
@@ -363,14 +366,14 @@ class Server:
                 return 'Target exists'
             if p.is_dir():
                 if method == 'cp':
-                    shutil.copytree(p, t, symlinks=True)
+                    self._loop.run_in_executor(None, self._func_cpt, p, t)
                 else:
-                    shutil.move(p, t)
+                    self._loop.run_in_executor(None, shutil.move, p, t)
             else:
                 if method == 'cp':
-                    shutil.copy2(p, t, follow_symlinks=False)
+                    self._loop.run_in_executor(None, self._func_cp2, p, t)
                 else:
-                    shutil.move(p, t)
+                    self._loop.run_in_executor(None, shutil.move, p, t)
         except Exception as exc:
             self._log(f'Error: cp/mv {src} failed '
                       f'{type(exc).__name__}: {exc}')
