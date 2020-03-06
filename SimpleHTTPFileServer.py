@@ -15,7 +15,7 @@ from aiohttp import web
 # Uncomment the following line if os.sendfile is buggy or doesn't work
 # web.FileResponse._sendfile = web.FileResponse._sendfile_fallback
 
-__version__ = '1.9.8'
+__version__ = '1.9.9'
 __author__ = 'spcharc'
 
 _change_log = '''Change Log:
