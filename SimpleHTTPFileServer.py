@@ -15,7 +15,7 @@ from aiohttp import web
 # Uncomment the following line if os.sendfile is buggy or doesn't work
 # web.FileResponse._sendfile = web.FileResponse._sendfile_fallback
 
-__version__ = '1.9.9'
+__version__ = '1.9.10'
 __author__ = 'spcharc'
 
 _change_log = '''Change Log:
@@ -297,7 +297,7 @@ class Server:
             if newp.is_symlink() or newp.is_file():
                 newp.unlink()
             elif newp.is_dir():
-                self._loop.run_in_executor(None, shutil.rmtree, newp)
+                await self._loop.run_in_executor(None, shutil.rmtree, newp)
         except Exception as exc:
             self._log(f'Error: delete {to_del} failed '
                       f'{type(exc).__name__}: {exc}')
@@ -366,14 +366,14 @@ class Server:
                 return 'Target exists'
             if p.is_dir():
                 if method == 'cp':
-                    self._loop.run_in_executor(None, self._func_cpt, p, t)
+                    await self._loop.run_in_executor(None, self._func_cpt, p, t)
                 else:
-                    self._loop.run_in_executor(None, shutil.move, p, t)
+                    await self._loop.run_in_executor(None, shutil.move, p, t)
             else:
                 if method == 'cp':
-                    self._loop.run_in_executor(None, self._func_cp2, p, t)
+                    await self._loop.run_in_executor(None, self._func_cp2, p, t)
                 else:
-                    self._loop.run_in_executor(None, shutil.move, p, t)
+                    await self._loop.run_in_executor(None, shutil.move, p, t)
         except Exception as exc:
             self._log(f'Error: cp/mv {src} failed '
                       f'{type(exc).__name__}: {exc}')
