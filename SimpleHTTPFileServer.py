@@ -15,7 +15,7 @@ from aiohttp import web
 # Uncomment the following line if os.sendfile is buggy or doesn't work
 # web.FileResponse._sendfile = web.FileResponse._sendfile_fallback
 
-__version__ = '1.10.3'
+__version__ = '1.10.4'
 __author__ = 'spcharc'
 
 _change_log = '''Change Log:
@@ -430,7 +430,10 @@ class Server:
             result /= base
             unit += 1
         suffix = self._size_units[binary][unit]
+        if result.is_integer():
+            return f"{int(result)} {suffix}"
         return f"{result:.{precision}f} {suffix}"
+        
 
     def _get_dir(self, request, rname, path, ro, root, post_result):
         if not request.path.endswith('/'):
