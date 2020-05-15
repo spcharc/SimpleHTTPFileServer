@@ -422,6 +422,7 @@ class Server:
                                           self._html5]),
                             content_type='text/html')
 
+    @staticmethod
     def _size_for_human(size, binary, precision=2):
         base = 1024.0 if binary else 1000.0
         result = float(size)
