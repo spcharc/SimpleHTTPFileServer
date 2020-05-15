@@ -15,7 +15,7 @@ from aiohttp import web
 # Uncomment the following line if os.sendfile is buggy or doesn't work
 # web.FileResponse._sendfile = web.FileResponse._sendfile_fallback
 
-__version__ = '1.10.0'
+__version__ = '1.10.1'
 __author__ = 'spcharc'
 
 _change_log = '''Change Log:
@@ -478,7 +478,7 @@ class Server:
             'td',
             self._html7.format(parse.quote(item_name),
                                html.escape(item_name)),
-            self._size_for_human(size, True)))
+            self._size_for_human(size, True))
             for item_name, size in sorted(body[2].items()))
         resp.append(self._html3)
         if not ro:
