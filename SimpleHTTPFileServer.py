@@ -15,10 +15,11 @@ from aiohttp import web
 # Uncomment the following line if os.sendfile is buggy or doesn't work
 # web.FileResponse._sendfile = web.FileResponse._sendfile_fallback
 
-__version__ = '1.9.12'
+__version__ = '1.10.0'
 __author__ = 'spcharc'
 
 _change_log = '''Change Log:
+v1.10 - Non-listing dir.
 v1.9 - Sub-app.
 v1.8 - Prefix.
 v1.7 - HTTPS support.
@@ -57,10 +58,10 @@ class Server:
             async with server:
                 do_something
     '''
-    _html0 = ('<!DOCTYPE html>\n<html>\n<head>\n<title>Simple HTTP File Server'
-              f'</title>\n<meta name="author" content="{__author__}">\n<meta n'
-              f'ame="generator" content="{platform.python_implementation()}-Ve'
-              f'r{platform.python_version()}">\n<meta charset="UTF-8">\n<meta '
+    _html0 = ('<!DOCTYPE html>\n<html>\n<head>\n<title>{0}</title>\n<meta name'
+              f'="author" content="{__author__}">\n<meta name="generator" cont'
+              f'ent="{platform.python_implementation()}-Ver'
+              f'{platform.python_version()}">\n<meta charset="UTF-8">\n<meta '
               'name="viewport" content="width=device-width, initial-scale=1.0"'
               '>\n<style>\na{text-decoration:none;}\nhr{width:500px;margin-lef'
               't:0px;}\ntable{border:1px solid silver;border-collapse:collapse'
@@ -92,9 +93,18 @@ class Server:
     _html6 = '\n<body>\n<h2>Home Page</h2>\n<p>{0}</p>\n<hr>\n{1}\n<hr>'
     _html7 = '<a href="{0}">{1}</a>'
     _html8 = '<p>{0}</p>\n'
+
+    page_title = 'Simple HTTP File Server'
+    home_page_headline = 'List of entries'
+
     _re_pattern = re.compile('/{2,}')
+
     _func_cpt = functools.partial(shutil.copytree, symlinks=True)
     _func_cp2 = functools.partial(shutil.copy2, follow_symlinks=False)
+    # run in executor, pass named arguments in this way
+
+    _size_units = (("B", "KB", "MB", "GB", "TB"),
+                   ("B", "KiB", "MiB", "GiB", "TiB"))
 
     def __init__(self, *, listen=(('0.0.0.0', 8080, None),), loop=None,
                  logfile=Ellipsis, timef='%b/%d %H:%M:%S', wait=30,
@@ -140,6 +150,7 @@ class Server:
         self._fd = {}
         self._ro = set()
         self._hd = set()
+        self._ld = set()
         self._listen = tuple(listen)
         self._loop = loop
         self._logfile = logfile
@@ -149,7 +160,8 @@ class Server:
         self._https = tuple(https_redir)
         self._lpsvr = []  # Will be filled when starts listening
 
-    def add_share(self, name, path, *, hidden=False, readonly=False):
+    def add_share(self, name, path, *, hidden=False, readonly=False,
+                                       listdir=True):
         '''Args:
 
         :name:     str. name of share
@@ -159,6 +171,7 @@ class Server:
                    correct path in browser address bar
         :readonly: bool. Cannot write to read-only shared folders (this option
                    has no effect on shared files)
+        :listdir:  bool. Show content of dirs or not.
         '''
         if isinstance(path, str):
             path = pathlib.Path(path)
@@ -176,6 +189,10 @@ class Server:
             self._ro.add(name)
         else:
             self._ro.discard(name)
+        if listdir:
+            self._ld.add(name)
+        else:
+            self._ld.discard(name)
 
     def add_subapp(self, name, func, *, hidden=False):
         '''Args:
@@ -224,10 +241,11 @@ class Server:
         else:
             raise web.HTTPNotFound
         if callable(root):
+            # in case it is a sub_app handler
             return root
         readonly = root is None or share_name in self._ro
         if method is not None:
-            if readonly and method != 'GET':
+            if (root is None or readonly) and method != 'GET':
                 raise web.HTTPMethodNotAllowed(method, ['GET'])
             if method != 'GET' and method != 'POST':
                 raise web.HTTPMethodNotAllowed(method, ['GET', 'POST'])
@@ -291,7 +309,7 @@ class Server:
         to_del = pathlib.Path((await field.read()).decode('utf-8'))
         try:
             if len(to_del.parts) != 1 or to_del.anchor:
-                return 'Illegal input'
+                return 'Illegal input.'
             newp = self._local_path_check(path / to_del, root, True)
             if newp.is_symlink() or newp.is_file():
                 newp.unlink()
@@ -314,7 +332,7 @@ class Server:
             to = pathlib.Path((await field.read()).decode('utf-8'))
             if len(fr.parts) != 1 or len(to.parts) != 1 or fr.anchor or \
                     to.anchor:
-                return 'Illegal input'
+                return 'Illegal input.'
             newfr = self._local_path_check(path / fr, root, True)
             newto = self._local_path_check(path / to, root, False)
             if newto.exists():
@@ -353,13 +371,13 @@ class Server:
                     p = root2
                     name = rname
                 else:
-                    raise ValueError('Error: Unknown type.')
+                    raise ValueError('Can only operate on a file or dir.')
             else:
                 p = self._local_path_check(root2 / rest, root2, True)
                 if p.is_dir() or p.is_file():
                     name = p.name
                 else:
-                    raise ValueError('Error: Unknown type.')
+                    raise ValueError('Can only operate on a file or dir.')
             t = self._local_path_check(path / name, root, False)
             if t.exists():
                 return 'Target exists'
@@ -396,19 +414,29 @@ class Server:
                 pass # ignore ... (raise web.HTTPInternalServerError ?)
             resp.append(self._html7.format(parse.quote(name + suff),
                                            html.escape(name + suff)))
-        return web.Response(text=''.join([self._html0,
+        return web.Response(text=''.join([self._html0.format(
+                                              self.page_title),
                                           self._html6.format(
-                                              'List of entries',
+                                              self.home_page_headline,
                                               '<br>\n'.join(resp)),
                                           self._html5]),
                             content_type='text/html')
+
+    def _size_for_human(size, binary, precision=2):
+        base = 1024.0 if binary else 1000.0
+        result = float(size)
+        unit = 0
+        while base < result and unit < 4:
+            result /= base
+        suffix = self._size_units[binary][unit]
+        return f"{.{precision}f} {suffix}"
 
     def _get_dir(self, request, rname, path, ro, root, post_result):
         if not request.path.endswith('/'):
             raise web.HTTPMovedPermanently(request.path + '/')
         if post_result:
             post_result = self._html8.format(post_result)
-        resp = [self._html0,
+        resp = [self._html0.format(self.page_title),
                 self._html1.format(html.escape(
                     pathlib.Path(
                         rname,
@@ -422,15 +450,16 @@ class Server:
             resp.append(self._html2.format('td',
                                            self._html7.format('../', '../'),
                                            'DIR'))
-            for item in path.iterdir():
-                if item.is_symlink():
-                    body[0].append(item.name)
-                elif item.is_dir():
-                    body[1].append(item.name)
-                elif item.is_file():
-                    body[2][item.name] = item.stat().st_size
-                else:
-                    pass  # just ignore (raise web.HTTPInternalServerError ?)
+            if rname in self._ld:     # list content or not
+                for item in path.iterdir():
+                    if item.is_symlink():
+                        body[0].append(item.name)
+                    elif item.is_dir():
+                        body[1].append(item.name)
+                    elif item.is_file():
+                        body[2][item.name] = item.stat().st_size
+                    else:
+                        pass  # just ignore ?raise web.HTTPInternalServerError?
         except PermissionError:
             raise web.HTTPForbidden
         resp.extend(self._html2.format(
@@ -449,7 +478,7 @@ class Server:
             'td',
             self._html7.format(parse.quote(item_name),
                                html.escape(item_name)),
-            size)
+            self._size_for_human(size, True)))
             for item_name, size in sorted(body[2].items()))
         resp.append(self._html3)
         if not ro:
@@ -503,17 +532,19 @@ class Server:
         if root is None:
             return self._get_mainpage()
         path = self._local_path_check(root / to_handle, root, True)
-        post_result = ''
-        if request.method == 'POST':
-            try:
-                post_result = await self._post_handler(request, path, root)
-            except web.HTTPException:  # web.HTTPError would also work
-                raise
-            except Exception:
-                raise web.HTTPBadRequest
         if path.is_dir():
+            post_result = ''
+            if request.method == 'POST':
+                try:
+                    post_result = await self._post_handler(request, path, root)
+                except web.HTTPException:  # web.HTTPError would also work
+                    raise
+                except Exception:
+                    raise web.HTTPBadRequest
             return self._get_dir(request, rname, path, ro, root, post_result)
         elif path.is_file():
+            if request.method != 'GET':
+                raise web.HTTPMethodNotAllowed(method, ['GET'])
             return self._get_file(request, path)
         else:
             raise web.HTTPInternalServerError
@@ -530,6 +561,12 @@ class Server:
         if self._logfile is not None:
             self._logfile.write('{0} - {1}\n'.format(
                 time.strftime(self._timef), ' '.join(map(str, content))))
+
+    def change_title(self, title):
+        self.page_title = title
+
+    def change_headline(self, headline):
+        self.home_page_headline = headline
 
     def run(self):
         try:
@@ -572,8 +609,8 @@ class Server:
             self._log('List of share(s):')
             for name, path in self._fd.items():
                 self._log(f'{name}: {path}' +
-                          ('[hidden]' if name in self._hd else '') +
-                          ('[readonly]' if name in self._ro else ''))
+                          (' [hidden]' if name in self._hd else '') +
+                          (' [readonly]' if name in self._ro else ''))
             self.show_ip('8.8.8.8', 53, False)
             self.show_ip('2001:4860:4860::8888', 53, True)
 
