@@ -103,7 +103,7 @@ class Server:
     _func_cp2 = functools.partial(shutil.copy2, follow_symlinks=False)
     # run in executor, pass named arguments in this way
 
-    _size_units = (("B", "KB", "MB", "GB", "TB"),
+    _size_units = (("B", "kB", "MB", "GB", "TB"),
                    ("B", "KiB", "MiB", "GiB", "TiB"))
 
     def __init__(self, *, listen=(('0.0.0.0', 8080, None),), loop=None,
@@ -433,7 +433,6 @@ class Server:
         if result.is_integer():
             return f"{int(result)} {suffix}"
         return f"{result:.{precision}f} {suffix}"
-        
 
     def _get_dir(self, request, rname, path, ro, root, post_result):
         if not request.path.endswith('/'):
