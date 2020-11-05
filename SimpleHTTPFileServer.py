@@ -12,9 +12,6 @@ import functools
 from urllib import parse
 from aiohttp import web
 
-# Uncomment the following line if os.sendfile is buggy or doesn't work
-# web.FileResponse._sendfile = web.FileResponse._sendfile_fallback
-
 __version__ = '1.10.4'
 __author__ = 'spcharc'
 
