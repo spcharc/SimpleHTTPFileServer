@@ -76,11 +76,11 @@ It needs a name (displayed in the web page, and used in web path) and a file-sys
 ##### Finally, `Server.run` method starts the handling work
 It could be terminated by `Ctrl + C`, but it will wait for existing connections to finish before exiting. The maximum time could be set when creating the `Server` instance
 
-##### You may also use `async with Server([...])` to run it asynchronously
+##### You may also use `async with Server(...your arguments here...)` to run it asynchronously
 
 About security
 =
-~~No https support. So the connections are not secured.~~ Added https support
+~~No https support. So the connections are not secured.~~ Added https support.
 
 It is designed to disallow viewing / modifying folder outside of shared ones.
 
