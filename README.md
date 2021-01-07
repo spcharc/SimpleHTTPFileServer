@@ -58,7 +58,7 @@ ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
 ssl_context.load_cert_chain('chain.pem', 'privkey.pem')
 ```
 
-* `wait` specifies how many seconds the server waits when terminating, before a forced shutdown (default: 30)
+* `wait` specifies how many seconds the server waits (default: 30). It will wait for existing connections to close themselves. If all existing connections are closed during the waiting, it will exit right after that. If there are still existing connections after `wait` seconds, it will force them to close.
 
 * `logfile` can be specified to None, and no log will be written (default: writes to stdout)
 
@@ -69,9 +69,9 @@ It needs a name (displayed in the web page, and used in web path) and a file-sys
 
 * `readonly` flag: uploading / renaming / copying / moving is disabled if set to `True`
 
-##### `Server.add_subapp` method adds a async function handler as an entry. The function should have a signature of `async def func(request)`. All requests under this path will be passed to this function.
+##### `Server.add_subapp` method adds a async function handler as an entry. The function should have a signature of `async def func(request)`, where request is a `aiohttp.web_request.BaseRequest` instance provided by `aiohttp`. All requests under this path will be passed to this function.
 
-##### `Server.remove` method could be used to remove an existing shared item. It takes only the name as argument.
+##### `Server.remove` method could be used to remove an existing shared item. It takes the name as argument.
 
 ##### Finally, `Server.run` method starts the handling work
 It could be terminated by `Ctrl + C`, but it will wait for existing connections to finish before exiting. The maximum time could be set when creating the `Server` instance
@@ -80,10 +80,10 @@ It could be terminated by `Ctrl + C`, but it will wait for existing connections 
 
 About security
 =
-No https support. So the connections are not secured.
+~~No https support. So the connections are not secured.~~ Added https support
 
-It is designed to disallow viewing / modifying folder outside of shared ones. Don't rely on this.
+It is designed to disallow viewing / modifying folder outside of shared ones.
 
-Read-only shares could not be changed. Don't rely on this.
+Read-only shares could not be changed.
 
-Any contribution is welcomed.
+Any contribution is welcome.
