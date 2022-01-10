@@ -618,7 +618,7 @@ class Server:
         if len(self._lpsvr) > 0: # if no port / no addr to listen on, skip
             self._log(f'Exit in {self._wait} sec(s).')
             svrs = [i.stop() for i in self._lpsvr]
-            await asyncio.gather(*svrs, loop=self._loop)
+            await asyncio.gather(*svrs)
             self._lpsvr.clear()
             self._log('Exiting.')
 
