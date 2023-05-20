@@ -12,20 +12,10 @@ import functools
 from urllib import parse
 from aiohttp import web
 
-__version__ = '1.10.5'
-__author__ = 'spcharc'
+__version__ = '1.0'
+__author__ = 'Moon Men'
 
 _change_log = '''Change Log:
-v1.10 - Non-listing dir.
-v1.9 - Sub-app.
-v1.8 - Prefix.
-v1.7 - HTTPS support.
-v1.6 - Multiple bindings.
-v1.5 - Copy / move files.
-v1.4 - Rename items.
-v1.3 - Read-only and hidden shares.
-v1.2 - Multiple shared folders.
-v1.1 - Upload multiple files.
 v1.0 - Initial version.'''
 
 
